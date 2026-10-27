@@ -1,12 +1,26 @@
-import { Controller, Get } from '@nestjs/common';
-import { ApiGatewayService } from './api-gateway.service.js';
+import { Controller, Get, Param, Inject } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 
-@Controller()
+@Controller('users')
 export class ApiGatewayController {
-  constructor(private readonly apiGatewayService: ApiGatewayService) {}
+  constructor(
+    @Inject('USERS_SERVICE')
+    private readonly usersClient: ClientProxy,
+  ) {}
 
   @Get()
-  getHello(): string {
-    return this.apiGatewayService.getHello();
+  findAll() {
+    return this.usersClient.send(
+      'users.findAll',
+      {},
+    );
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.usersClient.send(
+      'users.findOne',
+      Number(id),
+    );
   }
 }
