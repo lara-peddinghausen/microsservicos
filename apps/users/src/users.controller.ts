@@ -1,27 +1,20 @@
-import { Controller, Get, Param, Inject } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
+// Controller do microsserviço Users, responsável por receber mensagens TCP, identificar os padrões com @MessagePattern e encaminhar as solicitações ao UsersService
 
-@Controller('users')
+import { Controller } from '@nestjs/common';
+import { MessagePattern } from '@nestjs/microservices';
+import { UsersService } from './users.service.js';
+
+@Controller()
 export class UsersController {
-  constructor(
-    @Inject('USERS_SERVICE') // Injeta o cliente do microsserviço de usuários no controller
-    private readonly usersClient: ClientProxy,  // ClientProxy permite enviar mensagens para o microsserviço de usuáio
-  ) { }
+  constructor(private readonly usersService: UsersService) {}
 
-  @Get()
+  @MessagePattern('users.findAll')
   findAll() {
-    return this.usersClient.send( // Envia uma mensagem para o microsserviço de usuários solicitando a lista de usuários
-      'users.findAll',
-      {},
-    );
+    return this.usersService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersClient.send(
-      'users.findOne',
-      Number(id),
-    );
+  @MessagePattern('users.findOne')
+  findOne(id: number) {
+    return this.usersService.findOne(id);
   }
-
 }
