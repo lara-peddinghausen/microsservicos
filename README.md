@@ -1,124 +1,130 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Microsserviços com NestJS
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Projeto em NestJS e TypeScript com um API Gateway HTTP e um microsserviço de usuários que se comunicam por TCP.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+# 1. Descrição
 
-## Description
+A aplicação contém um gateway que disponibiliza operações de consulta de usuários por HTTP e encaminha as solicitações ao microsserviço `users`. O microsserviço recebe mensagens TCP e usa Prisma para consultar os usuários.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+O repositório também contém a aplicação `nest-microservices`, que disponibiliza uma rota HTTP raiz com a resposta `Hello World!`.
 
-## Project setup
+# 2. Funcionalidades
 
-```bash
-$ npm install
+- Consulta da lista de usuários pelo gateway;
+- Consulta de um usuário pelo ID;
+- Comunicação entre o gateway e o microsserviço de usuários por TCP;
+- Consultas de usuários com Prisma;
+- Aplicação NestJS de exemplo com rota raiz.
+
+# 3. Tecnologias Utilizadas
+
+- Node.js;
+- NestJS;
+- TypeScript;
+- Prisma ORM;
+- Vitest;
+- Oxlint.
+
+# 4. Arquitetura e Organização do Projeto
+
+```text
+apps/
+├── api-gateway/
+│   └── src/
+│       ├── api-gateway.controller.ts
+│       ├── api-gateway.module.ts
+│       └── main.ts
+├── nest-microservices/
+│   └── src/
+│       ├── app.controller.ts
+│       ├── app.module.ts
+│       ├── app.service.ts
+│       └── main.ts
+└── users/
+    └── src/
+        ├── prisma/
+        │   └── prisma.service.ts
+        ├── users.controller.ts
+        ├── users.module.ts
+        ├── users.service.ts
+        └── main.ts
 ```
 
-## Compile and run the project
+- `apps/api-gateway/` — aplicação HTTP que encaminha as consultas para o serviço de usuários;
+- `apps/users/` — microsserviço TCP que trata as mensagens de consulta e chama o serviço de usuários;
+- `apps/users/src/prisma/prisma.service.ts` — serviço baseado em `PrismaClient`;
+- `apps/nest-microservices/` — aplicação HTTP de exemplo;
+- `nest-cli.json` — configura as aplicações do monorepositório;
+- `package.json` — lista as dependências e os comandos disponíveis.
+
+# 5. Pré-requisitos
+
+- Node.js;
+- npm.
+
+# 6. Instalação
+
+Na raiz do projeto, instale as dependências:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
+# 7. Execução
+
+O API Gateway recebe requisições HTTP na porta `3000` e está configurado para se comunicar com o microsserviço `users` por TCP na porta `3001`.
+
+Inicie cada aplicação em terminais separados:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npx nest start api-gateway --watch
 ```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npx nest start users --watch
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Observability
-
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
-
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
-
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-To add it to this project:
+A aplicação de exemplo também pode ser iniciada com:
 
 ```bash
-$ npm install @nestjs/observe
+npx nest start nest-microservices --watch
 ```
 
-Then follow the [setup guide](https://docs.nestjs.com/observability/overview) - it takes a single import and an app key.
+Ela atende na porta `3000` e disponibiliza a rota raiz `GET /`.
 
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
+# 8. Endpoints
 
-## Resources
+## API Gateway
 
-Check out a few resources that may come in handy when working with NestJS:
+| Método | Endpoint     | Descrição                         |
+| ------ | ------------ | --------------------------------- |
+| GET    | `/users`     | Solicita a lista de usuários      |
+| GET    | `/users/:id` | Solicita um usuário pelo ID       |
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+O gateway encaminha as consultas ao microsserviço usando os padrões de mensagem `users.findAll` e `users.findOne`.
 
-## Support
+## Aplicação de exemplo
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+| Método | Endpoint | Descrição                     |
+| ------ | -------- | ----------------------------- |
+| GET    | `/`      | Retorna `Hello World!`        |
 
-## Stay in touch
+# 9. Testes
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+Os comandos de teste disponíveis no `package.json` são:
 
-## License
+```bash
+npm run test
+npm run test:e2e
+npm run test:cov
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+# 10. Autor
+
+**Nome:** Lara Peddinghausen  
+**Turma:** ADS 2024.2N  
+**Unidade Curricular:** Programação Web 2  
+
+# 11. Licença e Uso Acadêmico
+
+Projeto desenvolvido para fins acadêmicos e de aprendizado na disciplina de Programação Web 2. O código poderá ser utilizado para avaliação e acompanhamento acadêmico durante o curso.
