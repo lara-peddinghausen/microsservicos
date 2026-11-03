@@ -21,7 +21,15 @@
     "types": [
       "vitest/globals",
       "node"
-    ]
+    ],
+    "paths": {
+      "@app/contracts": [
+        "./libs/contracts/src/index.ts"
+      ],
+      "@app/contracts/*": [
+        "./libs/contracts/src/*"
+      ]
+    }
   },
   "files": [],
   "references": [
@@ -33,6 +41,9 @@
     },
     {
       "path": "./apps/users/tsconfig.app.json"
+    },
+    {
+      "path": "./apps/orders/tsconfig.app.json"
     }
   ]
 }
