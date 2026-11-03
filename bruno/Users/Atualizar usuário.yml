@@ -1,0 +1,20 @@
+info:
+  name: Atualizar usuário
+  type: http
+
+http:
+  method: PATCH
+  url: http://localhost:3000/users/1
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Ana Maria"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

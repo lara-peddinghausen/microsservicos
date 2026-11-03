@@ -1,0 +1,22 @@
+info:
+  name: Cadastrar pedido
+  type: http
+
+http:
+  method: POST
+  url: http://localhost:3000/orders
+  body:
+    type: json
+    data: |-
+      {
+        "userId": 1,
+        "description": "Notebook",
+        "total": 4500.00
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
