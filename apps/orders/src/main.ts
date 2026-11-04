@@ -6,12 +6,10 @@
 
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
-import {
-  MicroserviceOptions,
-  Transport,
-} from '@nestjs/microservices';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ValidationPipe } from '@nestjs/common';
 import { OrdersModule } from './orders.module.js';
+import { RpcExceptionFilter } from '@app/contracts';
 
 async function bootstrap() {
   const app =
@@ -25,6 +23,8 @@ async function bootstrap() {
         },
       },
     );
+
+  app.useGlobalFilters(new RpcExceptionFilter());
 
   app.useGlobalPipes(  // Configura a validação global dos dados recebidos nas mensagens
     new ValidationPipe({

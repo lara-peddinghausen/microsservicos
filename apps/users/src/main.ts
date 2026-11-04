@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { ValidationPipe } from '@nestjs/common';
 import { UsersModule } from './users.module.js';
+import { RpcExceptionFilter } from '@app/contracts';
 
 async function bootstrap() {
   const app =
@@ -16,6 +17,8 @@ async function bootstrap() {
         },
       },
     );
+
+  app.useGlobalFilters(new RpcExceptionFilter());
 
   app.useGlobalPipes(
     new ValidationPipe({ // valida DTOs nas fronteiras de entrada, mas é necessário garantir que os DTOs estejam disponíveis como classes em tempo de execução
