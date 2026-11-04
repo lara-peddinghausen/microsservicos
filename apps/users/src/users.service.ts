@@ -1,13 +1,14 @@
 //  Lógica da aplicação.
 // UsersService não sabe que existe um Gateway. Ele conhece apenas sua própria regra de negócio e seu banco.
 
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma.service.js';
 import { CreateUserDto, UpdateUserDto } from '@app/contracts';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   create(data: CreateUserDto) {
     return this.prisma.user.create({
@@ -25,9 +26,10 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException(
-        'Usuário não encontrado',
-      );
+      throw new RpcException({
+        statusCode: 404,
+        message: 'Usuário não encontrado',
+      });
     }
 
     return user;
