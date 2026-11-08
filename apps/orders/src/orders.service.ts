@@ -94,14 +94,12 @@ export class OrdersService {
       where: { userId },
     });
 
-    // Verifica se o usuário não possui pedidos cadastrados
-    if (pedidos.length === 0) {
-      return {
-        message: 'Este usuário não possui pedidos cadastrados',
-      };
-    }
-
-    // Retorna os pedidos encontrados sem realizar uma nova consulta
-    return pedidos;
+    // Retorna uma mensagem e a lista de pedidos
+    return {
+      message: pedidos.length === 0
+        ? 'Este usuário não possui pedidos cadastrados'
+        : 'Pedidos encontrados com sucesso',
+      pedidos,
+    };
   }
 }
