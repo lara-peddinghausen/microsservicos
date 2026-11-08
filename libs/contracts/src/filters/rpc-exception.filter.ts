@@ -49,8 +49,33 @@ export class RpcExceptionFilter implements ExceptionFilter {
       }
     }
 
+    // Trata erros RPC recebidos de outros microsserviços
+    else if (exception && typeof exception === 'object') {
+      const error = exception as {
+        statusCode?: unknown;
+        message?: unknown;
+      };
+
+      // Verifica se o erro possui um código HTTP válido
+      if (
+        typeof error.statusCode === 'number' &&
+        Number.isInteger(error.statusCode) &&
+        error.statusCode >= 400 &&
+        error.statusCode <= 599
+      ) {
+        statusCode = error.statusCode;
+
+        // Preserva a mensagem original do microsserviço
+        if (typeof error.message === 'string') {
+          message = error.message;
+        } else if (Array.isArray(error.message)) {
+          message = error.message.join(', ');
+        }
+      }
+    }
+
     // Retorna o erro padronizado para o serviço que fez a chamada
-    return throwError(() => ({  
+    return throwError(() => ({
       statusCode,
       message,
     }));
