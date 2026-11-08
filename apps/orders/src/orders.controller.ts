@@ -53,4 +53,8 @@ export class OrdersController {
     return this.ordersService.findByUser(userId);
   }
 
+  @MessagePattern('orders.existsByUser')
+  existsByUser(@Payload() userId: number) {
+    return this.ordersService.existsByUser(userId);
+  }
 }

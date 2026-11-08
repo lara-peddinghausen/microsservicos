@@ -102,4 +102,15 @@ export class OrdersService {
       pedidos,
     };
   }
+
+  // Verifica se existe pelo menos um pedido associado ao usuário
+  async existsByUser(userId: number): Promise<boolean> {
+    const pedido = await this.prisma.order.findFirst({
+      where: { userId },
+      select: { id: true },
+    });
+
+    // Retorna true se encontrou um pedido e false caso contrário
+    return pedido !== null;
+  }
 }

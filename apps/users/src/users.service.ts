@@ -23,7 +23,6 @@ export class UsersService {
   }
 
   findAll() {
-    // await new Promise((resolve) => setTimeout(resolve, 5000)); // Teste do timeout 
     return this.prisma.user.findMany();
   }
 
@@ -50,49 +49,35 @@ export class UsersService {
   }
 
   async remove(id: number) {
-    // Verifica se o ID informado é um número inteiro positivo
-    if (!Number.isInteger(id) || id <= 0) {
-      throw new RpcException({
-        statusCode: 400,
-        message: 'ID do usuário inválido',
-      });
-    }
-
-    await this.findOne(id);  // Verifica se o usuário existe antes de tentar excluí-lo
-
-    // Consulta o Orders Service para verificar os pedidos vinculados ao usuário
-    let resposta: unknown;
-
-    try {
-      resposta = await firstValueFrom(
-        this.ordersClient
-          .send('orders.findByUser', id)
-          .pipe(timeout(3000)),
-      );
-
-      console.log('Resposta recebida do Orders Service:', resposta);
-
-    } catch (error) {
-      console.error('Erro recebido pelo Users Service:', error);
-      throw error;
-    }
-
-    // A consulta pode retornar um objeto contendo a lista de pedidos
-    const pedidos = Array.isArray(resposta)
-      ? resposta
-      : (resposta as { pedidos: unknown[] }).pedidos;
-
-    // Impede a exclusão caso existam pedidos associados ao usuário
-    if (pedidos.length > 0) {
-      throw new RpcException({
-        statusCode: 409,
-        message: 'Não é possível excluir um usuário que possui pedidos cadastrados',
-      });
-    }
-
-    // Exclui o usuário somente quando não existem pedidos vinculados
-    return this.prisma.user.delete({
-      where: { id },
+  // Valida se o identificador informado é um número inteiro positivo
+  if (!Number.isInteger(id) || id <= 0) {
+    throw new RpcException({
+      statusCode: 400,
+      message: 'ID do usuário inválido',
     });
   }
+
+  // Verifica se o usuário existe antes de tentar excluí-lo
+  await this.findOne(id);
+
+  // Consulta o Orders Service para verificar se o usuário possui pedidos
+  const possuiPedidos = await firstValueFrom(
+    this.ordersClient
+      .send<boolean>('orders.existsByUser', id)
+      .pipe(timeout(3000)),
+  );
+
+  // Bloqueia a exclusão quando existem pedidos vinculados
+  if (possuiPedidos) {
+    throw new RpcException({
+      statusCode: 409,
+      message: 'Não é possível excluir um usuário que possui pedidos cadastrados',
+    });
+  }
+
+  // Exclui o usuário caso não existam pedidos vinculados
+  return this.prisma.user.delete({
+    where: { id },
+  });
+}
 }
