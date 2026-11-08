@@ -1,10 +1,11 @@
 info:
   name: Listar pedidos de um usuário
   type: http
+  seq: 1
 
 http:
   method: GET
-  url: GET http://localhost:3000/orders/user/1
+  url: http://localhost:3000/orders/user/1
   auth: inherit
 
 settings:
