@@ -3,6 +3,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module.js';
+import { RpcToHttpFilter } from './common/rpc-to-http.filter.js';
 
 // Função responsável pela inicialização da aplicação
 async function bootstrap() {
@@ -14,6 +15,8 @@ async function bootstrap() {
       transform: true,  // Permite transformar os dados recebidos nos tipos esperados
     }),
   );
+
+  app.useGlobalFilters(new RpcToHttpFilter());
 
   await app.listen(3000);  // Inicia o servidor HTTP na porta 3000
 }

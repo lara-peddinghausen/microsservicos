@@ -7,17 +7,20 @@
 import { Body, Controller, Get, Inject, Param, ParseIntPipe, Post, Patch, Delete } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { CreateOrderDto, UpdateOrderDto } from '@app/contracts';
+import { RpcClientService } from './common/rpc-client.service.js';
 
 @Controller('orders') // Rota base
 export class OrdersController {
   constructor(
     @Inject('ORDERS_SERVICE')  // Injeta o cliente TCP configurado para comunicação com o microsserviço
     private readonly client: ClientProxy,
+    private readonly rpcClient: RpcClientService,
   ) { }
 
   @Post()
   create(@Body() dto: CreateOrderDto) {
-    return this.client.send(  // Envia os dados do DTO ao microsserviço utilizando o padrão de mensagem 'orders.create'
+    return this.rpcClient.send(  // Envia os dados do DTO ao microsserviço utilizando o padrão de mensagem 'orders.create'
+      this.client,
       'orders.create',
       dto,
     );
@@ -25,7 +28,8 @@ export class OrdersController {
 
   @Get()
   findAll() {
-    return this.client.send(
+    return this.rpcClient.send(
+      this.client,
       'orders.findAll',
       {},
     );
@@ -35,7 +39,8 @@ export class OrdersController {
   findOne(
     @Param('id', ParseIntPipe) id: number,
   ) {
-    return this.client.send(
+    return this.rpcClient.send(
+      this.client,
       'orders.findOne',
       id,
     );
@@ -46,7 +51,9 @@ export class OrdersController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateOrderDto,
   ) {
-    return this.client.send('orders.update', {
+    return this.rpcClient.send(
+      this.client,
+      'orders.update', {
       id,
       data: dto,
     });
@@ -54,14 +61,21 @@ export class OrdersController {
 
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
-    return this.client.send('orders.remove', id);
+    return this.rpcClient.send(
+      this.client,
+      'orders.remove',
+      id
+    );
   }
 
-  @Get('user/:userId')  // GET http://localhost:3000/orders/user/1
-  findByUser(@Param('userId') userId: string) {
-    return this.client.send(
+  @Get('user/:userId')   // GET http://localhost:3000/orders/user/1
+  findByUser(
+    @Param('userId', ParseIntPipe) userId: number,
+  ) {
+    return this.rpcClient.send(
+      this.client,
       'orders.findByUser',
-      Number(userId),
+      userId,
     );
   }
 }

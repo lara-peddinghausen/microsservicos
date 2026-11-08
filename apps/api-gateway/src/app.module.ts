@@ -4,6 +4,7 @@ import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { UsersController } from './users.controller.js';
 import { OrdersController } from './orders.controller.js';
+import { RpcClientService } from './common/rpc-client.service.js';
 
 // Módulo principal do API Gateway
 @Module({
@@ -31,5 +32,6 @@ import { OrdersController } from './orders.controller.js';
     UsersController,
     OrdersController,
   ],
+  providers: [RpcClientService],
 })
 export class AppModule {}
