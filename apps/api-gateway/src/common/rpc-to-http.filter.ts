@@ -13,8 +13,6 @@ export class RpcToHttpFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost) {  // Método executado automaticamente quando uma exceção é capturada
 
-    console.error('Erro recebido pelo Gateway:', exception);
-
     const response = host.switchToHttp().getResponse<Response>();  // Obtém o objeto de resposta HTTP para definir o status e a mensagem retornados ao cliente
 
     // Verifica se a exceção já é um erro HTTP do próprio Gateway
