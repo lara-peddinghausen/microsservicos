@@ -9,8 +9,8 @@
  * pedidos associados a usuários inválidos.
  */
 
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { ClientProxy, RpcException  } from '@nestjs/microservices';
+import { Inject, Injectable } from '@nestjs/common';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
 import { PrismaService } from './prisma.service.js';
 import { CreateOrderDto, UpdateOrderDto } from '@app/contracts';
@@ -46,10 +46,19 @@ export class OrdersService {
     return this.prisma.order.findMany();
   }
 
-  findOne(id: number) {
-    return this.prisma.order.findUnique({
+  async findOne(id: number) {
+    const pedido = await this.prisma.order.findUnique({
       where: { id },
     });
+
+    if (!pedido) {
+      throw new RpcException({
+        statusCode: 404,
+        message: 'Pedido não encontrado',
+      });
+    }
+
+    return pedido;
   }
 
   update(id: number, data: UpdateOrderDto) {
@@ -65,22 +74,34 @@ export class OrdersService {
     });
   }
 
-async findByUser(userId: number) {
-  if (!Number.isInteger(userId) || userId <= 0) {
-    throw new RpcException({
-      statusCode: 400,
-      message: 'ID do usuário inválido',
+  async findByUser(userId: number) {
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'ID do usuário inválido',
+      });
+    }
+
+    await firstValueFrom(  // Consulta o Users Service para verificar se o usuário existe
+      this.usersClient
+        .send('users.findOne', userId)
+        .pipe(timeout(3000)),
+    );
+
+    // Busca os pedidos associados ao usuário
+    const pedidos = await this.prisma.order.findMany({
+      where: { userId },
     });
+
+    // Verifica se o usuário não possui pedidos cadastrados
+    if (pedidos.length === 0) {
+      return {
+        message: 'Este usuário não possui pedidos cadastrados',
+      };
+    }
+
+    // Retorna os pedidos encontrados sem realizar uma nova consulta
+    return pedidos;
   }
-
-  await firstValueFrom(  // Consulta o Users Service para verificar se o usuário existe
-    this.usersClient
-      .send('users.findOne', userId)
-      .pipe(timeout(3000)),
-  );
-
-  return this.prisma.order.findMany({  // Se o usuário existir, consulta seus pedidos
-    where: { userId },
-  });
-}
 }

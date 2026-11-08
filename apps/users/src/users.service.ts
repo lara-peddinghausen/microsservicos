@@ -17,6 +17,7 @@ export class UsersService {
   }
 
   findAll() {
+    // await new Promise((resolve) => setTimeout(resolve, 5000)); // Teste do timeout 
     return this.prisma.user.findMany();
   }
 
