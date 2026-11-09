@@ -37,6 +37,15 @@
         "tsConfigPath": "apps/nest-microservices/tsconfig.app.json"
       }
     },
+    "notifications": {
+      "type": "application",
+      "root": "apps/notifications",
+      "entryFile": "main",
+      "sourceRoot": "apps/notifications/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/notifications/tsconfig.app.json"
+      }
+    },
     "orders": {
       "type": "application",
       "root": "apps/orders",

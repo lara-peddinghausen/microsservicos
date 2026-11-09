@@ -13,3 +13,4 @@ export * from './contracts.service.js';
 export * from './users.dto.js';
 export * from './orders.dto.js';
 export * from './filters/rpc-exception.filter.js';
+export * from './events.js';
