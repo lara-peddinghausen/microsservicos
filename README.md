@@ -9,16 +9,19 @@ API RESTful desenvolvida para cadastrar e consultar usuários e pedidos, com com
 
 O projeto implementa uma API HTTP para gerenciar usuários e pedidos. O API Gateway recebe as requisições e as encaminha aos microsserviços `users` e `orders`, que aplicam as regras de negócio e acessam seus bancos de dados PostgreSQL usando Prisma.
 
-O serviço `orders` consulta o serviço `users` para verificar a existência do usuário antes de criar um pedido. A aplicação pode ser utilizada por clientes HTTP, como aplicações web, ferramentas de teste de API ou outros sistemas.
+O serviço `orders` consulta o serviço `users` para verificar a existência do usuário antes de criar um pedido ou listar seus pedidos. A aplicação pode ser utilizada por clientes HTTP, como aplicações web, ferramentas de teste de API ou outros sistemas.
 
 ---
 
 # 2. Funcionalidades
 
-- Cadastro, consulta, atualização e exclusão de usuários;
-- Cadastro e consulta de pedidos;
+- Cadastro, consulta, atualização e exclusão de usuários, com bloqueio da exclusão quando há pedidos associados;
+- Cadastro, consulta, atualização e exclusão de pedidos;
+- Listagem dos pedidos associados a um usuário;
 - Comunicação do gateway com os microsserviços por TCP;
-- Verificação da existência do usuário antes de criar um pedido;
+- Verificação da existência do usuário antes de criar ou listar pedidos;
+- Padronização de erros RPC entre microsserviços e conversão para respostas HTTP no Gateway;
+- Timeout de 3 segundos nas chamadas do Gateway aos microsserviços;
 - Validação de dados com DTOs compartilhados;
 - Persistência em bancos PostgreSQL separados para usuários e pedidos;
 - Aplicação NestJS de exemplo com a rota raiz `GET /`.
@@ -48,7 +51,10 @@ nest-microservices/
 │   │       ├── app.module.ts
 │   │       ├── main.ts
 │   │       ├── users.controller.ts
-│   │       └── orders.controller.ts
+│   │       ├── orders.controller.ts
+│   │       └── common/
+│   │           ├── rpc-client.service.ts
+│   │           └── rpc-to-http.filter.ts
 │   ├── users/
 │   │   └── src/
 │   │       ├── main.ts
@@ -66,6 +72,10 @@ nest-microservices/
 ├── libs/
 │   └── contracts/
 │       └── src/
+│           ├── users.dto.ts
+│           ├── orders.dto.ts
+│           └── filters/
+│               └── rpc-exception.filter.ts
 ├── prisma/
 │   ├── users/
 │   └── orders/
@@ -73,10 +83,10 @@ nest-microservices/
 └── nest-cli.json
 ```
 
-- `apps/api-gateway/` — recebe requisições HTTP e as encaminha aos microsserviços;
+- `apps/api-gateway/` — recebe requisições HTTP e as encaminha aos microsserviços; `src/common/` contém o serviço de comunicação RPC com timeout e o filtro que converte erros RPC em respostas HTTP;
 - `apps/users/` — processa mensagens TCP e executa operações de usuários;
 - `apps/orders/` — processa mensagens TCP, verifica usuários e executa operações de pedidos;
-- `libs/contracts/` — define DTOs e regras de validação compartilhados;
+- `libs/contracts/` — define DTOs e regras de validação compartilhados, além do filtro de exceções RPC usado pelos microsserviços;
 - `prisma/` — contém schemas, configurações e migrações do Prisma;
 - `apps/nest-microservices/` — aplicação de exemplo independente;
 - `nest-cli.json` — configura os projetos do monorepositório.
@@ -183,6 +193,9 @@ Os endpoints abaixo são disponibilizados pelo API Gateway em `http://localhost:
 | `POST` | `/orders` | Cadastra um pedido para um usuário existente |
 | `GET` | `/orders` | Lista os pedidos |
 | `GET` | `/orders/:id` | Consulta um pedido pelo ID |
+| `PATCH` | `/orders/:id` | Atualiza parcialmente um pedido |
+| `DELETE` | `/orders/:id` | Remove um pedido |
+| `GET` | `/orders/user/:userId` | Lista os pedidos de um usuário existente |
 
 ---
 
@@ -239,7 +252,7 @@ O NestJS retorna erros HTTP com informações como código e mensagem. Um erro d
 }
 ```
 
-Outros erros podem ocorrer por indisponibilidade dos serviços TCP, falhas de conexão com o banco ou operações sobre registros inexistentes.
+Os microsserviços usam um filtro RPC compartilhado para padronizar erros, que o Gateway converte em respostas HTTP. Usuários ou pedidos inexistentes retornam erro `404`; a tentativa de excluir um usuário que possui pedidos retorna `409 Conflict`. Se uma chamada TCP do Gateway exceder o timeout de 3 segundos, a resposta será `504 Gateway Timeout`. Também podem ocorrer erros por falhas de conexão com o banco ou indisponibilidade dos serviços.
 
 ---
 
@@ -290,11 +303,25 @@ O campo `Order.userId` identifica o usuário associado. A existência do usuári
 2. O e-mail do usuário deve ser único no banco;
 3. Atualizações de usuário aceitam nome e/ou e-mail;
 4. Um pedido exige `userId` positivo, descrição com pelo menos três caracteres e total positivo com até duas casas decimais;
-5. Um pedido só é criado após a verificação de que o usuário existe no serviço `users`.
+5. Um pedido só é criado após a verificação de que o usuário existe no serviço `users`;
+6. A listagem de pedidos por usuário também exige que o usuário exista no serviço `users`;
+7. Pedidos podem ser atualizados parcialmente e removidos pelo ID;
+8. Um usuário associado a um ou mais pedidos não pode ser excluído.
 
 ---
 
-# 17. Autor
+# 17. Extras
+
+- Implementadas as operações `orders.update` e `orders.remove` para atualizar e excluir pedidos;
+- Adicionado o endpoint `GET /orders/user/:userId` para listar os pedidos associados a um usuário;
+- O serviço `orders` verifica se o usuário existe antes de criar pedidos ou listar seus pedidos, retornando erro quando o usuário não é encontrado;
+- Adicionado um filtro de exceções RPC compartilhado para padronizar o formato de erros entre os microsserviços;
+- Adicionado timeout de 3 segundos às chamadas do Gateway para os microsserviços; quando excedido, a resposta HTTP é `504 Gateway Timeout`;
+- A exclusão de usuários que possuem pedidos é bloqueada, retornando erro `409 Conflict`.
+
+---
+
+# 18. Autor
 
 **Nome:** Lara Peddinghausen
 **Turma:** ADS 2024.2N
@@ -302,6 +329,6 @@ O campo `Order.userId` identifica o usuário associado. A existência do usuári
 
 ---
 
-# 18. Licença e Uso Acadêmico
+# 19. Licença e Uso Acadêmico
 
 Projeto desenvolvido para fins acadêmicos e de aprendizado na disciplina de Programação Web 2. O código poderá ser utilizado para avaliação e acompanhamento acadêmico durante o curso.
