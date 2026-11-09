@@ -14,6 +14,8 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { firstValueFrom, timeout } from 'rxjs';
 import { PrismaService } from './prisma.service.js';
 import { CreateOrderDto, UpdateOrderDto } from '@app/contracts';
+import { randomUUID } from 'node:crypto';
+import type { OrderCreatedEvent } from '@app/contracts';
 
 @Injectable()
 export class OrdersService {
@@ -22,24 +24,57 @@ export class OrdersService {
 
     @Inject('USERS_SERVICE')
     private readonly usersClient: ClientProxy,
+
   ) { }
 
+
   async create(data: CreateOrderDto) {
+
     // Consulta o microserviço de usuários para buscar o usuário pelo ID
     const user = await firstValueFrom(
       this.usersClient
         .send('users.findOne', data.userId) // Envia o ID do usuário e recebe um Observable como resposta
-        .pipe(timeout(3000)),  // Define um limite de 3 segundos para aguardar a resposta para evitar que a operação aguarde indefinidamente
+        .pipe(timeout(3000)), // Define um limite de 3 segundos para aguardar a resposta
     );
 
-    // Persiste o pedido no banco de Orders
-    return this.prisma.order.create({
-      data: {
-        userId: data.userId,
-        description: data.description,
-        total: data.total,
-      },
+    if (!user) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    // Inicia uma transação para salvar o pedido e o evento juntos
+    const result = await this.prisma.$transaction(async (tx) => {
+
+      // Salva o pedido no banco de dados
+      const order = await tx.order.create({
+        data: {
+          userId: data.userId,
+          description: data.description,
+          total: data.total,
+        },
+      });
+
+      // Cria o evento com os dados do pedido
+      const event: OrderCreatedEvent = {
+        eventId: randomUUID(), // Gera um identificador único para o acontecimento
+        orderId: order.id,
+        userId: order.userId,
+        total: order.total.toString(),
+        occurredAt: new Date().toISOString(), // Registra a data e hora de criação do evento em UTC
+      };
+
+      // Salva o evento na tabela OutboxEvent
+      await tx.outboxEvent.create({
+        data: {
+          id: event.eventId,
+          eventType: 'order.created',
+          payload: { ...event },
+        },
+      });
+
+      return order;
     });
+
+    return result;
   }
 
   findAll() {
