@@ -19,6 +19,15 @@
         "tsConfigPath": "apps/api-gateway/tsconfig.app.json"
       }
     },
+    "contracts": {
+      "type": "library",
+      "root": "libs/contracts",
+      "entryFile": "index",
+      "sourceRoot": "libs/contracts/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/contracts/tsconfig.lib.json"
+      }
+    },
     "nest-microservices": {
       "type": "application",
       "root": "apps/nest-microservices",
@@ -26,6 +35,15 @@
       "sourceRoot": "apps/nest-microservices/src",
       "compilerOptions": {
         "tsConfigPath": "apps/nest-microservices/tsconfig.app.json"
+      }
+    },
+    "orders": {
+      "type": "application",
+      "root": "apps/orders",
+      "entryFile": "main",
+      "sourceRoot": "apps/orders/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/orders/tsconfig.app.json"
       }
     },
     "users": {
